@@ -2,48 +2,53 @@ package com.zuehlke.testing.exercise;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Mailbox {
 
-    private List<Mail> mail = new ArrayList<>();
+    private List<Mail> mails = new ArrayList<>();
+    private UserRepository userRepository;
 
+    @Deprecated
     public Mailbox(String userId) {
-        User user = UserRepository.getUser(userId);
-        List<Mail> mail = MailServer.getMail(user);
-        for (int i = 0; i < mail.size(); i++) {
-            if (!mail.get(i).getSubject().contains("Junk")
-                    && !mail.get(i).getSubject().contains("Spam")
-                    && !mail.get(i).getSubject().contains("Advertisment")
-                    && !mail.get(i).getSubject().contains("Ads")
-                    || UserRepository.isSafeSender(mail.get(i).getFrom())) {
-                this.mail.add(mail.get(i));
-            }
-        }
+        List<Mail> mails = retrieveMails(userId);
+        this.mails = filterSpamMails(mails);
     }
 
-    public void sendMail(Mail mail) {
-        mail.setDate(System.currentTimeMillis());
-        MailServer.sendMail(mail);
+    private List<Mail> retrieveMails(String userId) {
+        return new MailServer().getMail(new UserRepository().getUser(userId));
     }
 
-    static class MailServer {
-        static List<Mail> getMail(User user) {
+    public Mailbox(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
+    public List<Mail> filterSpamMails(List<Mail> userMails) {
+        return userMails.stream()
+                .filter(mail -> mail.isNotSpam() || userRepository.isSafeSender(mail.getFrom()))
+                .collect(Collectors.toList());
+    }
+
+    class MailServer {
+
+        List<Mail> getMail(User user) {
             return new ArrayList<>();
         }
 
-        static void sendMail(Mail mail) {
+        void sendMail(Mail mail) {
+            mail.setDate(System.currentTimeMillis());
         }
     }
 
     class User {
     }
 
-    static class UserRepository {
-        static User getUser(String userId) {
+    class UserRepository {
+        User getUser(String userId) {
             return null;
         }
 
-        public static boolean isSafeSender(String from) {
+        public boolean isSafeSender(String from) {
             return true;
         }
     }
@@ -59,6 +64,14 @@ public class Mailbox {
 
         String getSubject() {
             return "";
+        }
+
+        private boolean isNotSpam() {
+            String subject = getSubject();
+            return !subject.contains("Junk")
+                    && !subject.contains("Spam")
+                    && !subject.contains("Advertisment")
+                    && !subject.contains("Ads");
         }
     }
 }

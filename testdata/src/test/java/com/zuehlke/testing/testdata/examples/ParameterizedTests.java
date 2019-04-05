@@ -1,5 +1,6 @@
 package com.zuehlke.testing.testdata.examples;
 
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.aggregator.AggregateWith;
@@ -83,6 +84,7 @@ class ParameterizedTests {
         return IntStream.range(0, 20).skip(10);
     }
 
+    @DisplayName("🎉")
     @ParameterizedTest
     @MethodSource("stringAndIntProvider")
     void testWithMultiArgMethodSource(String first, int second) {
